@@ -43,8 +43,14 @@ int test_gap_buffer() {
 }
 
 int main(int argc, char **argv) { 
-    GBuff<std::string> gbuff(16);
+    GBuff<char> gbuff(16);
+    std::string garbage("garbage");
     assert(gbuff.Capacity()==16);
     assert(gbuff.Size()==0);
+    for(auto it = garbage.begin(); it != garbage.end(); it++) {
+        gbuff.Insert(*it);
+    }
+    assert(gbuff.Capacity()==16);
+    assert(gbuff.Size()==garbage.length());
     return 0; 
 }

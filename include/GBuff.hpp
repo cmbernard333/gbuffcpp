@@ -14,7 +14,7 @@ public:
     GBuff(std::size_t len=32);
     ~GBuff();
     
-    void Insert(type& element);
+    void Insert(type element);
     void Delete(std::size_t position);
     std::size_t CursorLeft(std::size_t position);
     std::size_t CursorRight(std::size_t position);
@@ -54,8 +54,8 @@ GBuff<type>::~GBuff() {
  * @return std::size_t the new size of the gap buffer if it was grown
 **/
 template <class type>
-void GBuff<type>::Insert(type& element) {
-    if (gap_end - cursor <= element.size()) {
+void GBuff<type>::Insert(type element) {
+    if (gap_end - cursor == 0) {
         // grow the gap and move the elements to the right
         // double it and fill it with gap
         type* newbuf = new type[total*2];
@@ -70,8 +70,7 @@ void GBuff<type>::Insert(type& element) {
         total *= 2;
     }
     // depending on where you are in the buffer, you copy everything to the right of the cursor to the end to make space for the new element
-    std::copy(element, element.size(), buffer[cursor]);
-    cursor += element.size();
+    buffer[cursor++] = element;
 }
 
 /**
