@@ -1,0 +1,10 @@
+# Ignore the build and lib dirs
+build
+lib/*
+a.out
+
+# Ignore any executables
+bin/*
+
+# Ignore mac stuff
+.DS_Store
