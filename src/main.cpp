@@ -45,12 +45,29 @@ int test_gap_buffer() {
 int main(int argc, char **argv) { 
     GBuff<char> gbuff(16);
     std::string garbage("garbage");
+    std::string day("day");
+    // check initial capacity
     assert(gbuff.Capacity()==16);
     assert(gbuff.Size()==0);
     for(auto it = garbage.begin(); it != garbage.end(); it++) {
         gbuff.Insert(*it);
     }
+    // check new size and capacity
     assert(gbuff.Capacity()==16);
     assert(gbuff.Size()==garbage.length());
+
+    // check some values - start, end
+    assert(gbuff[0]=='g');
+    assert(gbuff[6]=='e');
+
+    // let's make this complex now - move the cursor
+    gbuff.CursorLeft(0);
+
+    // verify start, end are same
+    assert(gbuff[0]=='g');
+    assert(gbuff[6]=='e');
+
+    // let's add some stuff
+
     return 0; 
 }
