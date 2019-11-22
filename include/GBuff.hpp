@@ -58,6 +58,8 @@ private:
   std::size_t cursor;  // pointer to the cursor
   std::size_t gap_end; // end of the gap
 
+  std::size_t gapSize();
+
   friend class GBuffIterator;
 };
 
@@ -84,7 +86,7 @@ template <class type> GBuff<type>::~GBuff() { delete[] buffer; }
  * @return std::size_t the new size of the gap buffer if it was grown
  **/
 template <class type> void GBuff<type>::Insert(type element) {
-  if (gap_end - cursor == 0) {
+  if (gapSize() == 0) {
     // grow the gap and move the elements to the right
     // double it and fill it with gap
     type *newbuf = new type[total * 2];
@@ -124,7 +126,7 @@ template <class type>
 std::size_t GBuff<type>::CursorLeft(std::size_t position) {
   // gap boundaries = cursor, cursor + gap_end
   std::copy(buffer + position, buffer + cursor, (buffer + gap_end) - (cursor - position));
-  gap_end = gap_end - cursor;
+  gap_end = gapSize();
   cursor = position;
   return cursor;
 }
@@ -141,7 +143,7 @@ template <class type>
 std::size_t GBuff<type>::CursorRight(std::size_t position) {
   // gap boundaries = cursor, cursor + gap_end
   std::copy(buffer + cursor, buffer + position, buffer);
-  std::size_t gap_size = gap_end - cursor;
+  std::size_t gap_size = gapSize();
   cursor = position;
   gap_end = cursor + gap_size;
   return cursor;
@@ -156,18 +158,25 @@ template <class type> std::size_t GBuff<type>::Capacity() { return total; }
  * Return the size occupied in this buffer (without the gap)
  **/
 template <class type> std::size_t GBuff<type>::Size() {
-  return total - (gap_end - cursor);
+  return total - (gapSize());
 }
 
 /**
  * Return the element at the position
- * The position is not absolute as we have to account for the gap
+ * The position is not absolute as we have to account for the gap size
  **/
 template <class type> type &GBuff<type>::operator[](std::size_t position) {
   if (position >= cursor) {
-    position += (gap_end - cursor);
+    position += (gapSize());
   }
   return buffer[position];
+}
+
+/**
+ * Private function for calculating the gap size - save some code in some places
+**/
+template<class type> std::size_t GBuff<type>::gapSize() {
+  return gap_end -cursor;
 }
 
 /*

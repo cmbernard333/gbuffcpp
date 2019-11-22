@@ -68,6 +68,12 @@ int main(int argc, char **argv) {
     assert(gbuff[6]=='e');
 
     // let's add some stuff
+    for(auto it = day.begin(); it != day.end(); it++) {
+      gbuff.Insert(*it);
+    }
+    gbuff.Insert(' ');
+    assert(gbuff.Capacity()==16);
+    assert(gbuff.Size()==garbage.length()+day.length()+1);
 
     return 0; 
 }
