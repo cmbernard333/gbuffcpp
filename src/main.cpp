@@ -75,5 +75,15 @@ int main(int argc, char **argv) {
     assert(gbuff.Capacity()==16);
     assert(gbuff.Size()==garbage.length()+day.length()+1);
 
+    // let's check the contents and see if we get the right thing
+    char buffer_contents[gbuff.Size()];
+    std::size_t index = 0;
+    for(auto it = gbuff.begin(); it != gbuff.end(); ++it) {
+      buffer_contents[index++] = *it;
+    }
+    for(index = 0; index < gbuff.Size(); index++) {
+      std::cout<<buffer_contents[index]<<std::endl;
+    }
+
     return 0; 
 }

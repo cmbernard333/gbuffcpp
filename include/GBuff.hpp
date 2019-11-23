@@ -1,6 +1,37 @@
 #pragma once
 
 /*
+ ====================================================
+
+ Gap Buffer Iterator - only supports forward iteration, assignment, and dereference
+
+ ====================================================
+ */
+template <typename type, class Container> class GBuffIterator {
+public:
+  typedef std::input_iterator_tag iterator_category; // or another tag
+  typedef GBuffIterator<type, Container> iterator;
+
+  // Note: Instances build with this constructor should
+  // be used only after copy-assigning from other iterator!
+  GBuffIterator();
+  ~GBuffIterator();
+  GBuffIterator(Container* gbuff, std::size_t index = 0);
+  GBuffIterator(const iterator& other);
+  GBuffIterator &operator=(const GBuffIterator &it);
+  bool operator==(const iterator& other) const;
+  bool operator!=(const iterator& other) const;
+
+  type& operator*() const;
+  iterator& operator++();
+  iterator operator++(int);
+
+private:
+  Container* gbuff;
+  std::size_t index;
+};
+
+/*
 ====================================================
 
 Generic gap buffer
@@ -10,6 +41,12 @@ Generic gap buffer
 
 template <class type> class GBuff {
 public:
+
+  typedef type value_type;
+  typedef type& reference;
+  typedef const type& const_reference;
+  typedef GBuffIterator<type, GBuff<type>> iterator;
+
   GBuff(std::size_t len = 32);
   ~GBuff();
 
@@ -21,36 +58,9 @@ public:
   std::size_t Size();
   type &operator[](std::size_t position);
 
-  /*
-  ====================================================
-
-  Gap Buffer Iterator - only supports forward iteration and dereference
-
-  ====================================================
-  */
-  class GBuffIterator {
-  public:
-    typedef std::input_iterator_tag iterator_category; // or another tag
-
-    // Note: Instances build with this constructor should
-    // be used only after copy-assigning from other iterator!
-    GBuffIterator();
-    ~GBuffIterator();
-    type operator*() const;
-    GBuffIterator &operator++();
-    GBuffIterator operator++(int);
-
-  protected:
-    GBuffIterator(GBuff<type> *gbuff, std::size_t index = 0);
-
-  private:
-    GBuff<type> *gbuff;
-    std::size_t index;
-  };
-
 public:
-  typedef GBuff<type>::GBuffIterator iterator;
   iterator begin();
+  iterator end();
 
 private:
   type *buffer;
@@ -59,8 +69,6 @@ private:
   std::size_t gap_end; // end of the gap
 
   std::size_t gapSize();
-
-  friend class GBuffIterator;
 };
 
 /**
@@ -125,7 +133,8 @@ template <class type> void GBuff<type>::Delete(std::size_t position) {
 template <class type>
 std::size_t GBuff<type>::CursorLeft(std::size_t position) {
   // gap boundaries = cursor, cursor + gap_end
-  std::copy(buffer + position, buffer + cursor, (buffer + gap_end) - (cursor - position));
+  std::copy(buffer + position, buffer + cursor,
+            (buffer + gap_end) - (cursor - position));
   gap_end = gapSize();
   cursor = position;
   return cursor;
@@ -172,35 +181,95 @@ template <class type> type &GBuff<type>::operator[](std::size_t position) {
   return buffer[position];
 }
 
+/*
+===================================================
+Retrieving iterators into the container
+===================================================
+*/
+template <class type> typename GBuff<type>::iterator GBuff<type>::begin() {
+  iterator it(this, 0);
+  return it;
+}
+
+template <class type> typename GBuff<type>::iterator GBuff<type>::end() {
+  iterator it(this, total);
+  return it;
+}
+
 /**
  * Private function for calculating the gap size - save some code in some places
-**/
-template<class type> std::size_t GBuff<type>::gapSize() {
-  return gap_end -cursor;
+ **/
+template <class type> std::size_t GBuff<type>::gapSize() {
+  return gap_end - cursor;
 }
 
 /*
 ====================================================
 
-Iterator - only supports forward iteration and dereference
+Iterator - only supports forward iteration, dereference, and copy assignable
 
 ====================================================
 */
-template <typename type> GBuff<type>::GBuffIterator::GBuffIterator() {}
+template<typename type, class Container> GBuffIterator<type, Container>::GBuffIterator() {
+  gbuff = nullptr;
+  index = 0;
+}
 
-template <typename type> GBuff<type>::GBuffIterator::~GBuffIterator() {}
+template<typename type, class Container> GBuffIterator<type, Container>::~GBuffIterator() {}
 
-template <typename type>
-GBuff<type>::GBuffIterator::GBuffIterator(GBuff<type> *gbuff,
+template<typename type, class Container>
+GBuffIterator<type, Container>::GBuffIterator(Container* gbuff,
                                           std::size_t index) {
   this->gbuff = gbuff;
   this->index = index;
 }
 
-template <typename type> type GBuff<type>::GBuffIterator::operator*() const {}
+template<typename type, class Container> 
+type& GBuffIterator<type, Container>::operator*() const {
+  return (*gbuff)[index];
+}
 
-template <typename type>
-typename GBuff<type>::GBuffIterator &GBuff<type>::GBuffIterator::operator++() {}
+/**
+ * pre-increment
+ **/
+template<typename type, class Container>
+GBuffIterator<type, Container> &GBuffIterator<type, Container>::operator++() {
+  ++index;
+  return *this;
+}
 
-template <typename type>
-typename GBuff<type>::GBuffIterator GBuff<type>::GBuffIterator::operator++(int) {}
+/**
+ * post-increment
+ **/
+template <typename type, class Container>
+GBuffIterator<type, Container> GBuffIterator<type,Container>::operator++(int) {
+  iterator ret = *this;
+  index++;
+  return ret;
+}
+
+/**
+ * operator= to create a new reference to a GBuffIterator
+ **/
+template<typename type, class Container>
+GBuffIterator<type, Container>& GBuffIterator<type, Container>::operator=(const iterator &it) {
+  index = it.index;
+  gbuff = it.gbuff;
+  return *this;
+}
+
+/**
+ * operator== compares this to another iterator
+**/
+template<typename type, class Container>
+bool GBuffIterator<type, Container>::operator==(const iterator& other) const {
+  return gbuff == other.gbuff && index == other.index;
+}
+
+/**
+ * operator== compares this to another iterator
+**/
+template<typename type, class Container>
+bool GBuffIterator<type, Container>::operator!=(const iterator& other) const{
+  return !operator==(other);
+}
